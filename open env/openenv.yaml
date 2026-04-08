@@ -1,0 +1,6 @@
+spec_version: 1
+name: email-triage-smart-response-system
+description: OpenEnv environment for triaging inbound emails, assigning priority, and generating smart responses.
+runtime: fastapi
+app: my_env:app
+port: 8000
