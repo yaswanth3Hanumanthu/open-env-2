@@ -158,7 +158,7 @@ The environment uses deterministic programmatic grading with partial progress si
 - response quality contributes up to `+0.4`
 - invalid, incorrect, or out-of-order actions apply a `-0.2` penalty to the internal reward balance
 - cumulative reward is clamped into `0.0` to `1.0`
-- final task `score` is normalized into `0.0` to `1.0`
+- final task `score` is normalized strictly inside `(0, 1)` for validator compatibility
 
 ### Response Quality Rubric
 
@@ -209,9 +209,9 @@ Using the built-in heuristic fallback with `--disable-openai`, the expected dete
 
 | Task | Score | Reward Trace |
 |---|---:|---|
-| `easy` | `1.00` | `0.30` |
-| `medium` | `1.00` | `0.30,0.60` |
-| `hard` | `1.00` | `0.30,0.60,1.00` |
+| `easy` | `0.99` | `0.30` |
+| `medium` | `0.99` | `0.30,0.60` |
+| `hard` | `0.99` | `0.30,0.60,1.00` |
 
 ## Local Setup
 

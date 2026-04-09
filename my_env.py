@@ -26,6 +26,8 @@ from models import (
 
 
 ENV_NAME = "email-triage-smart-response-system"
+SCORE_MIN = 0.01
+SCORE_MAX = 0.99
 
 
 def clamp(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
@@ -34,6 +36,12 @@ def clamp(value: float, minimum: float = 0.0, maximum: float = 1.0) -> float:
 
 def normalize_text(value: str) -> str:
     return " ".join(value.lower().strip().split())
+
+
+def strict_score(value: float) -> float:
+    """Keep validator-facing task scores strictly inside (0, 1)."""
+    clipped = clamp(value, 0.0, 1.0)
+    return round(SCORE_MIN + ((SCORE_MAX - SCORE_MIN) * clipped), 2)
 
 
 @dataclass(frozen=True)
@@ -251,7 +259,7 @@ class EmailTriageEnv:
             "done": False,
             "reward_balance": 0.0,
             "raw_reward": 0.0,
-            "score": 0.0,
+            "score": strict_score(0.0),
             "success": False,
             "history": [],
             "completed_stages": [],
@@ -379,7 +387,7 @@ class EmailTriageEnv:
                 env_name=self.env_name,
                 initialized=False,
                 done=False,
-                score=0.0,
+                score=strict_score(0.0),
                 raw_reward=0.0,
                 reward_balance=0.0,
                 history=[],
@@ -435,11 +443,11 @@ class EmailTriageEnv:
 
     def _normalized_score(self) -> float:
         if self._episode is None:
-            return 0.0
+            return strict_score(0.0)
         task = self._episode["task"]
         if task.max_reward <= 0:
-            return 0.0
-        return round(clamp(self._episode["raw_reward"] / task.max_reward, 0.0, 1.0), 2)
+            return strict_score(0.0)
+        return strict_score(self._episode["raw_reward"] / task.max_reward)
 
     def _build_observation(self) -> EmailObservation:
         if self._episode is None:
