@@ -1,5 +1,0 @@
-client
-inference
-models
-my_env
-server

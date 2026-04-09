@@ -11,3 +11,5 @@ __pycache__/
 .env.*
 outputs/logs/
 outputs/evals/
+
+*.egg-info/
