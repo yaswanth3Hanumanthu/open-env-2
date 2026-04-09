@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Tuple
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Body, FastAPI, HTTPException
 from pydantic import ValidationError
 
 from models import (
@@ -618,18 +618,33 @@ def reset_env_get(task_name: str = "easy", email_id: Optional[str] = None) -> Re
 
 
 @app.post("/reset", response_model=ResetResponse)
-def reset_env(request: ResetRequest) -> ResetResponse:
+def reset_env(
+    request: Optional[Dict[str, Any]] = Body(default=None),
+    task_name: str = "easy",
+    email_id: Optional[str] = None,
+) -> ResetResponse:
+    payload = ResetRequest(task_name=task_name, email_id=email_id)
+    if request is not None:
+        try:
+            payload = ResetRequest.model_validate(request)
+        except ValidationError as exc:
+            raise HTTPException(status_code=400, detail=exc.errors()) from exc
     try:
-        observation = ENV.reset(task_name=request.task_name, email_id=request.email_id)
+        observation = ENV.reset(task_name=payload.task_name, email_id=payload.email_id)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return ResetResponse(observation=observation)
 
 
 @app.post("/step", response_model=StepResponse)
-def step_env(request: StepRequest) -> StepResponse:
+def step_env(request: Dict[str, Any] = Body(...)) -> StepResponse:
+    action_payload = request.get("action", request)
     try:
-        observation, reward, done, info = ENV.step(request.action)
+        action = EmailAction.model_validate(action_payload)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=exc.errors()) from exc
+    try:
+        observation, reward, done, info = ENV.step(action)
     except RuntimeError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     return StepResponse(observation=observation, reward=reward, done=done, info=info)
